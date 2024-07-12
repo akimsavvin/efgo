@@ -6,15 +6,14 @@ import (
 
 var db *sql.DB
 
-func Configure(connStr string) error {
-	var err error
-	db, err = sql.Open("pgx", connStr)
+func Configure(driverName, connStr string) (err error) {
+	db, err = sql.Open(driverName, connStr)
 	if err != nil {
-		return err
+		return
 	}
 
-	if err := db.Ping(); err != nil {
-		return err
+	if err = db.Ping(); err != nil {
+		return
 	}
 
 	return nil
