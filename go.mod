@@ -1,3 +1,3 @@
-module efgo.savvin.io/efgo
+module github.com/akimsavvin/efgo
 
 go 1.18
