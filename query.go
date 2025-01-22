@@ -42,7 +42,7 @@ func QueryRowContext[T any](ctx context.Context, qx QueryExec, query string, arg
 			f := val.Field(j).Addr()
 			ft := typ.Field(j)
 
-			if col == ft.Tag.Get("qx") {
+			if col == ft.Tag.Get("db") {
 				scanArgs[i] = f
 			}
 		}
