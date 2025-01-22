@@ -1,3 +1,3 @@
 module efgo.savvin.io/efgo
 
-go 1.22
+go 1.18
