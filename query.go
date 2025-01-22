@@ -6,11 +6,17 @@ import (
 	"reflect"
 )
 
-func QueryRow[T any](db *sql.DB, query string, args ...interface{}) (*T, error) {
-	return QueryRowContext[T](context.Background(), db, query, args...)
+type QueryExec interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
 
-func QueryRowContext[T any](ctx context.Context, db *sql.DB, query string, args ...interface{}) (*T, error) {
+func QueryRow[T any](qx QueryExec, query string, args ...interface{}) (*T, error) {
+	return QueryRowContext[T](context.Background(), qx, query, args...)
+}
+
+func QueryRowContext[T any](ctx context.Context, qx QueryExec, query string, args ...interface{}) (*T, error) {
 	if reflect.TypeFor[T]().Kind() != reflect.Struct {
 		panic("can not query row context of non-struct type")
 	}
@@ -19,7 +25,7 @@ func QueryRowContext[T any](ctx context.Context, db *sql.DB, query string, args 
 	val := reflect.ValueOf(result).Elem()
 	typ := val.Type()
 
-	rows, err := db.QueryContext(ctx, query, args...)
+	rows, err := qx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +42,7 @@ func QueryRowContext[T any](ctx context.Context, db *sql.DB, query string, args 
 			f := val.Field(j).Addr()
 			ft := typ.Field(j)
 
-			if col == ft.Tag.Get("db") {
+			if col == ft.Tag.Get("qx") {
 				scanArgs[i] = f
 			}
 		}
@@ -56,18 +62,18 @@ func QueryRowContext[T any](ctx context.Context, db *sql.DB, query string, args 
 	return result, nil
 }
 
-func Query[T any](db *sql.DB, query string, args ...any) ([]*T, error) {
-	return QueryContext[T](context.Background(), db, query, args...)
+func Query[T any](qx QueryExec, query string, args ...any) ([]*T, error) {
+	return QueryContext[T](context.Background(), qx, query, args...)
 }
 
-func QueryContext[T any](ctx context.Context, db *sql.DB, query string, args ...any) ([]*T, error) {
+func QueryContext[T any](ctx context.Context, qx QueryExec, query string, args ...any) ([]*T, error) {
 	if reflect.TypeFor[T]().Kind() != reflect.Struct {
 		panic("can not query row context of non-struct type")
 	}
 
 	typ := reflect.TypeFor[T]()
 
-	rows, err := db.QueryContext(ctx, query, args...)
+	rows, err := qx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
